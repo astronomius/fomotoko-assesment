@@ -19,19 +19,22 @@ The project files are organized as follows:
 
 ```text
 online-store/
-├── Http/
-│   ├── Controller/
-│   │   └── OrderController.php
-│   └── routes.php
-├── Models/
-│   ├── Product.php
-│   ├── Order.php (Order Model)
-│   └── OrderItem.php
-├── migrations.php
-├── race-condition.test.php
-├── Dockerfile              # Docker recipe for the PHP CLI runner environment
-├── docker-compose.yml      # Multi-container orchestration (App & Postgres DB)
-├── entrypoint.sh           # Automation script to setup skeleton, sync, migrate, and test
+├── app/
+│   ├── Console/Commands/
+│   │   └── TestRaceCondition.php   # CLI Concurrency Test Command
+│   ├── Http/Controllers/
+│   │   └── OrderController.php      # Order Controller with Pessimistic Locking
+│   └── Models/
+│       ├── Order.php
+│       ├── OrderItem.php
+│       └── Product.php
+├── database/migrations/
+│   └── *_create_online_store_tables.php # Migrations
+├── routes/
+│   └── api.php                      # Order POST Route Definition
+├── Dockerfile                       # Docker runner container config
+├── docker-compose.yml               # PostgreSQL & App containers config
+├── entrypoint.sh                    # Automated migration and test runner script
 └── README.md
 ```
 
@@ -48,7 +51,7 @@ docker compose up -d
 ```
 This spins up:
 - A PostgreSQL database container.
-- An application container that automatically boots up, provisions a clean Laravel 10 skeleton, maps the source files, configurations, migrations, runs them, and hosts the server.
+- An application container that automatically wait-connects to PostgreSQL, runs database migrations, and serves the application.
 
 ### 2. Run the Concurrency Test
 The container automatically runs the test upon initial setup. You can run it manually at any time using:
@@ -136,24 +139,34 @@ curl -X POST http://localhost:8000/api/orders \
 
 ---
 
-## 🛠️ Alternative Setup (Manual Local Integration)
+## 🛠️ Alternative Setup (Manual Local Setup)
 
-If you prefer to run it outside Docker in your own existing Laravel project:
+If you prefer to run the project locally outside of Docker (requires PHP 8.2+ and Composer installed on your host machine):
 
-1. **Copy the Files**:
-   - `migrations.php` $\rightarrow$ `database/migrations/<timestamp>_create_online_store_tables.php`
-   - `race-condition.test.php` $\rightarrow$ `app/Console/Commands/TestRaceCondition.php`
-   - `Http/routes.php` $\rightarrow$ `routes/api.php`
-   - `Http/Controller/OrderController.php` $\rightarrow$ `app/Http/Controllers/OrderController.php`
-   - `Models/*` $\rightarrow$ `app/Models/`
-
-2. **Configure Database & Web Server**: Ensure your database configuration supports row-level locking (e.g. MySQL/InnoDB, PostgreSQL) and configure `PHP_CLI_SERVER_WORKERS=50` if using the built-in Artisan server to allow concurrent request handling.
-
-3. **Run migrations and trigger test**:
+1. **Install Dependencies**:
    ```bash
+   composer install
+   ```
+
+2. **Configure Environment**:
+   Copy `.env.example` to `.env` and set up your PostgreSQL database credentials:
+   ```bash
+   cp .env.example .env
+   ```
+
+3. **Generate App Key & Run Migrations**:
+   ```bash
+   php artisan key:generate
    php artisan migrate
-   php artisan serve
-   # (In a separate terminal tab)
+   ```
+
+4. **Start Web Server & Run Concurrency Test**:
+   To test concurrent requests, configure multiple CLI server workers when serving the application:
+   ```bash
+   PHP_CLI_SERVER_WORKERS=50 php artisan serve
+   ```
+   In a separate terminal window, execute the test:
+   ```bash
    php artisan test:race-condition
    ```
 

@@ -11,7 +11,6 @@ return new class extends Migration
         Schema::create('products', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            // Using unsignedInteger as a database-level failsafe against negative inventory
             $table->integer('inventory')->unsigned(); 
             $table->decimal('price', 10, 2);
             $table->timestamps();

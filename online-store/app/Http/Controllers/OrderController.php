@@ -7,10 +7,14 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Exception;
 
 class OrderController extends Controller
 {
+    public function index()
+    {
+        return response()->json(Order::with('items')->get());
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -20,47 +24,45 @@ class OrderController extends Controller
         ]);
 
         try {
-            $order = DB::transaction(function () use ($validated) {
-                $order = Order::create(['total_price' => 0]);
-                $totalPrice = 0;
+            DB::beginTransaction();
 
-                foreach ($validated['items'] as $item) {
-                    $product = Product::where('id', $item['product_id'])
-                                      ->lockForUpdate()
-                                      ->first();
+            $order = Order::create([
+                'total_amount' => 0,
+                'status' => 'completed',
+            ]);
 
-                    if ($product->inventory < $item['quantity']) {
-                        throw new Exception("Insufficient inventory for product: {$product->name}. Only {$product->inventory} left.");
-                    }
+            $totalAmount = 0;
 
-                    $product->inventory -= $item['quantity'];
-                    $product->save();
+            foreach ($validated['items'] as $itemData) {
+                $product = Product::where('id', $itemData['product_id'])->lockForUpdate()->first();
 
-                    OrderItem::create([
-                        'order_id' => $order->id,
-                        'product_id' => $product->id,
-                        'quantity' => $item['quantity'],
-                        'price' => $product->price,
-                    ]);
-
-                    $totalPrice += $product->price * $item['quantity'];
+                if ($product->current_stock < $itemData['quantity']) {
+                    throw new \Exception("Insufficient stock for product: " . $product->name);
                 }
 
-                $order->update(['total_price' => $totalPrice]);
+                $priceToUse = $product->dynamic_price ?? $product->base_price;
 
-                return $order;
-            });
+                OrderItem::create([
+                    'order_id' => $order->id,
+                    'product_id' => $product->id,
+                    'quantity' => $itemData['quantity'],
+                    'price_at_time' => $priceToUse,
+                ]);
 
-            return response()->json([
-                'message' => 'Order created successfully.',
-                'data' => $order->load('items')
-            ], 201);
+                $product->decrement('current_stock', $itemData['quantity']);
 
-        } catch (Exception $e) {
-            return response()->json([
-                'error' => 'Failed to process order.',
-                'message' => $e->getMessage()
-            ], 409);
+                $totalAmount += ($priceToUse * $itemData['quantity']);
+            }
+
+            $order->update(['total_amount' => $totalAmount]);
+
+            DB::commit();
+
+            return response()->json($order->load('items'), 201);
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => $e->getMessage()], 400);
         }
     }
 }

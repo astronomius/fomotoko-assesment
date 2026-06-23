@@ -5,17 +5,18 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Order extends Model
+class InventoryLog extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'total_amount',
-        'status',
+        'product_id',
+        'change_amount',
+        'reason',
     ];
 
-    public function items()
+    public function product()
     {
-        return $this->hasMany(OrderItem::class);
+        return $this->belongsTo(Product::class);
     }
 }

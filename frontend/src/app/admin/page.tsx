@@ -1,6 +1,5 @@
-import { BarChart3, TrendingUp, Package, AlertTriangle, Users } from 'lucide-react';
+import { BarChart3, TrendingUp, Package, AlertTriangle } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
-import Link from 'next/link';
 
 export default function AdminDashboard() {
   return (

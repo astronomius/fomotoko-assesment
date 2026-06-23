@@ -3,20 +3,22 @@
 import { useState, useEffect } from "react";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Plus, Edit, Trash2, X, User as UserIcon } from "lucide-react";
-import Link from "next/link";
+
+interface User {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+}
 
 export default function UsersPage() {
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState<any>(null);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
   const [formData, setFormData] = useState({ name: "", email: "", password: "", role: "cashier" });
-
-  useEffect(() => {
-    fetchUsers();
-  }, []);
 
   const fetchUsers = async () => {
     try {
@@ -30,13 +32,18 @@ export default function UsersPage() {
     }
   };
 
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchUsers();
+  }, []);
+
   const deleteUser = async (id: number) => {
     if (!confirm("Are you sure you want to delete this user?")) return;
     await fetch(`http://localhost:8000/api/users/${id}`, { method: "DELETE" });
-    setUsers(users.filter((u: any) => u.id !== id));
+    setUsers(users.filter((u: User) => u.id !== id));
   };
 
-  const openModal = (user: any = null) => {
+  const openModal = (user: User | null = null) => {
     if (user) {
       setEditingUser(user);
       setFormData({
@@ -58,7 +65,7 @@ export default function UsersPage() {
     const url = isEditing ? `http://localhost:8000/api/users/${editingUser.id}` : "http://localhost:8000/api/users";
 
     // Construct payload. Don't send empty password on update.
-    const payload: any = { ...formData };
+    const payload: Record<string, string> = { ...formData };
     if (isEditing && !payload.password) {
       delete payload.password;
     }
@@ -115,7 +122,7 @@ export default function UsersPage() {
               </tr>
             </thead>
             <tbody>
-              {users.map((user: any) => (
+              {users.map((user: User) => (
                 <tr key={user.id} className="border-b border-neutral-100 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
                   <td className="p-4 font-medium flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center text-neutral-500">

@@ -4,13 +4,23 @@ import { useState, useEffect } from "react";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Plus, Edit, Trash2, X } from "lucide-react";
 
+interface Product {
+  id: number;
+  name: string;
+  sku: string;
+  base_price: string | number;
+  dynamic_price?: string | number | null;
+  current_stock: number;
+  optimal_stock?: number | null;
+}
+
 export default function InventoryPage() {
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [formData, setFormData] = useState({ name: "", sku: "", base_price: "", current_stock: "", optimal_stock: "" });
 
   useEffect(() => {
@@ -29,10 +39,10 @@ export default function InventoryPage() {
   const deleteProduct = async (id: number) => {
     if (!confirm("Are you sure you want to delete this product?")) return;
     await fetch(`http://localhost:8000/api/products/${id}`, { method: "DELETE" });
-    setProducts(products.filter((p: any) => p.id !== id));
+    setProducts(products.filter((p: Product) => p.id !== id));
   };
 
-  const openModal = (product: any = null) => {
+  const openModal = (product: Product | null = null) => {
     if (product) {
       setEditingProduct(product);
       setFormData({
@@ -64,7 +74,7 @@ export default function InventoryPage() {
     if (res.ok) {
       const savedProduct = await res.json();
       if (isEditing) {
-        setProducts(products.map((p: any) => p.id === savedProduct.id ? savedProduct : p));
+        setProducts(products.map((p: Product) => p.id === savedProduct.id ? savedProduct : p));
       } else {
         setProducts([...products, savedProduct]);
       }
@@ -110,7 +120,7 @@ export default function InventoryPage() {
               </tr>
             </thead>
             <tbody>
-              {products.map((product: any) => (
+              {products.map((product: Product) => (
                 <tr key={product.id} className="border-b border-neutral-100 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
                   <td className="p-4 font-mono text-sm">{product.sku}</td>
                   <td className="p-4 font-medium">{product.name}</td>

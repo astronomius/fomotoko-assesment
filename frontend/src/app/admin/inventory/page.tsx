@@ -48,9 +48,9 @@ export default function InventoryPage() {
       setFormData({
         name: product.name,
         sku: product.sku,
-        base_price: product.base_price,
-        current_stock: product.current_stock,
-        optimal_stock: product.optimal_stock,
+        base_price: String(product.base_price),
+        current_stock: String(product.current_stock),
+        optimal_stock: product.optimal_stock ? String(product.optimal_stock) : "",
       });
     } else {
       setEditingProduct(null);

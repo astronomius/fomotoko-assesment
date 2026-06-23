@@ -103,7 +103,7 @@ export default function CashierPOS() {
 
   const cartTotal = cart.reduce((sum, item) => {
     const price = item.product.dynamic_price || item.product.base_price;
-    return sum + (price * item.quantity);
+    return sum + (Number(price) * item.quantity);
   }, 0);
 
   return (

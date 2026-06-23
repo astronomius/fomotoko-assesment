@@ -39,7 +39,7 @@ export default function Login() {
       } else {
         setError(data.message || "Invalid credentials");
       }
-    } catch (err) {
+    } catch {
       setError("Network error. Please make sure the backend is running.");
     } finally {
       setLoading(false);

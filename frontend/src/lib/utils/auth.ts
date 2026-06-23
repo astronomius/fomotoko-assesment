@@ -1,12 +1,12 @@
 import { RequestCookies } from 'next/dist/compiled/@edge-runtime/cookies';
 
-export function isAuthenticated(cookies: any) {
+export function isAuthenticated(cookies: RequestCookies) {
   // Try to get token from cookies
   const token = cookies.get('auth_token');
   return !!token?.value;
 }
 
-export function getUserRole(cookies: any) {
+export function getUserRole(cookies: RequestCookies) {
   const role = cookies.get('user_role');
   return role?.value || null;
 }

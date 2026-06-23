@@ -6,12 +6,11 @@ RUN apk add --no-cache \
     curl \
     curl-dev \
     libzip-dev \
-    postgresql-dev \
     unzip \
     zip \
     $PHPIZE_DEPS
 
-RUN docker-php-ext-install pdo pdo_pgsql pgsql zip curl
+RUN docker-php-ext-install pdo pdo_mysql zip curl
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 

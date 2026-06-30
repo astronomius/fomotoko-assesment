@@ -8,10 +8,11 @@ import { logout } from "@/lib/utils/auth";
 
 export function Sidebar() {
   const [open, setOpen] = useState(false);
-  const [container, setContainer] = useState<HTMLElement | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    setContainer(document.body);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsMounted(true);
   }, []);
 
   return (
@@ -22,8 +23,8 @@ export function Sidebar() {
         </button>
       </Dialog.Trigger>
       
-      {container && (
-        <Dialog.Portal container={container}>
+      {isMounted && (
+        <Dialog.Portal container={document.body}>
           <Dialog.Content 
             onInteractOutside={e => e.preventDefault()}
             onPointerDownOutside={e => e.preventDefault()}

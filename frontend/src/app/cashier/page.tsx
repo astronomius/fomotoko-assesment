@@ -4,32 +4,43 @@ import { useState, useEffect } from 'react';
 import { ShoppingBag, Search, CreditCard, Minus, Plus, Trash2 } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
 
+interface Product {
+  id: number;
+  name: string;
+  sku: string;
+  base_price: string | number;
+  dynamic_price?: string | number | null;
+  current_stock: number;
+  optimal_stock?: number | null;
+}
+
 export default function CashierPOS() {
-  const [products, setProducts] = useState<any[]>([]);
-  const [cart, setCart] = useState<{ product: any, quantity: number }[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [cart, setCart] = useState<{ product: Product, quantity: number }[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
-
-  useEffect(() => {
-    fetchProducts();
-  }, []);
 
   const fetchProducts = async () => {
     try {
       const res = await fetch("http://localhost:8000/api/products");
       const data = await res.json();
       setProducts(data);
-    } catch (err) {
-      console.error("Failed to fetch products:", err);
+    } catch {
+      console.error("Failed to fetch products");
     }
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchProducts();
+  }, []);
 
   const filteredProducts = products.filter(p =>
     p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     p.sku.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const addToCart = (product: any) => {
+  const addToCart = (product: Product) => {
     setCart(prev => {
       const existing = prev.find(item => item.product.id === product.id);
       if (existing) {
@@ -83,7 +94,7 @@ export default function CashierPOS() {
         const error = await res.json();
         alert(`Checkout Failed: ${error.message}`);
       }
-    } catch (err) {
+    } catch {
       alert("Checkout Failed due to network error.");
     } finally {
       setIsProcessing(false);
@@ -92,7 +103,7 @@ export default function CashierPOS() {
 
   const cartTotal = cart.reduce((sum, item) => {
     const price = item.product.dynamic_price || item.product.base_price;
-    return sum + (price * item.quantity);
+    return sum + (Number(price) * item.quantity);
   }, 0);
 
   return (
